@@ -3,6 +3,13 @@
 标签： vue js 笔记
 
 ---
+> 组件化干嘛 官方：可以利于多人开发，便于扩展，当然也可以提高代码的可读性与可维护性。
+为了提升开发效率啊，加快开发速度 减少变更代价 方便替换
+
+---
+
+> 干嘛要单页应用啊，单页应用有什么好啊。。
+
 
 Vue 和angular一样都是mvvm框架
 什么是mvvm框架呢
@@ -12,7 +19,6 @@ mvvm中的model代表我们的相关数据和信息，但它只持有信息，�
 还是有点懵懵的，但是了解点mv＊后再去看vue介绍就清楚点了。
 
 vue.js是mvvm框架，那么页面和数据逻辑分离，减少dom操作必然是他所要实现的。
-
 ```
 // 下面的代码就是创建一个vue实例，
 // 每一个vue实例都是一个viewmodel
@@ -23,7 +29,6 @@ var vm = new vue({
     }
 })
 ```
-
 ```
 <!-- 这里是view -->
 <div id="demo-1">
@@ -48,5 +53,50 @@ Filters是过滤器用于在更新视图之前处理原始值的函数。它们�
 <div>{{message | capitalize}}</div>
 ```
 这样在 div 的文本内容被更新之前，message 的值会先传给 capitalizie 函数处理。)
+
+### 生命周期
+生命周期既是vue实例化的步骤（比如建立观察，编译模版数据绑定什么的），与此同时实例会调用一些勾子函数，给码农自定义行为的机会。
+
+```
+var vn = new Vue({
+    data: {
+        a: 1
+    },
+    created: function (){
+        console.log(this.a)
+    }
+})
+// 以上的 created就是个勾子函数，会在vue实例的生命周期处于创建后状态同步调用
+```
+vue实例的生命周期从 new Vue()执行开始，首先触发created(),这个时候选项的解析完成，建立了数据绑定，属性计算啊啊，方法啊，但是dom还没开始编译，所以这个时候你在created（）中调用`$el`是无效的，created（）后就开始编译啦，编译dom当然要先看有el选项否，有 接着看 是否有template，这个时候触发beforeCompile()（编译dom节点前），接着开始编译，有模版就编译模版替换掉文档中的el，没有就算el的，pia,编译完成，周期勾子走到compile（），然后插入到document，ready（）勾子触发，剩下两个属于死亡周期了，destroy（）beforeDestroy()，一个销毁实例开始时，一个销毁后调用(使用这个vm.$destroy()的时候触发，可以传参数true，dom级删除，这个时候会出发datached（）勾子)。
+
+### v-bind v-on
+```
+//v-bind  响应更新html特性
+<a v-bind:href="url"></a>
+<a :class="active"></a> //缩写
+//v-on 监听dom事件
+<a v-on:click="todo"></a>
+<a @:click="todo"></a>
+```
+```
+// class的动态切换
+<a :class="{classa : isa, classb : isb}">
+<a :class="[classa, isB ? 'classb' : '']">
+// :style css属性会自动加前缀
+
+<li class="list-group-item"
+    v-for="(index,list) in lists"
+    v-bind:class="[list.active ? 'active' : '']"
+    v-on:click="setListActive(index)">
+    {{ list.content }}
+</li>
+```
+### 计算属性 computed
+
+
+### 通信&&传递
+
+
 
 
