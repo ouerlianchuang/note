@@ -94,9 +94,311 @@ vue实例的生命周期从 new Vue()执行开始，首先触发created(),这个
 ```
 ### 计算属性 computed
 
+```
+<div id="demo1"></div>
+```
+```
+var vm = new vue({
+    data: {
+        a: 1
+    },
+    computed: {
+        b: function () {
+            return this.a + 1
+        }
+    }
+})
+```
+这里  b同样是vm的属性，它会因a的改变而改变，b依赖于a
 
-### 通信&&传递
+计算属性 默认只有getter只有获取权限，你也可以设置setter权限
+```
+computed:  {
+    b: {
+        get: function() {
+            return a + 1
+        },
+        set: function(v) {
+            this.a = v - 1
+        }
+    }
+
+}
+```
+### 指令
+指令，带特殊前缀的HTML特性，可以让 Vue.js 对一个 DOM 元素做各种处理
+v-text 更新元素的textContent 相当于 ｛｛text｝｝
+v-html 更新innerhtml
+v-if v-else v-show
+```
+<a v-if="true">show</a>
+<a v-else>hide</a>
+
+<template v-if="true">
+    innerhTML
+</template>
+
+// if 与 show的区别在于if会判断是否出现在文档流，show是单纯的display切换
+```
+v-for
+```
+<ul>
+    <li v-for="(index,list) in lists"
+        :class="list.active"
+        @click="click(index)">
+        list.content
+    </li>
+</ul>
+```
+on bind
+`上面⬆`️
+v-on 绑定事件监听器 只见听原生dom的
+子组件上使用，可以绑定自定义事件
+```
+<my-component @my-event="todo"></my-component>
 
 
+// v-on可以使用事件修饰符 类似于原生中的
+event.preventDefault() event.stopPropagation()
+@click.stop="dosom"阻止事件冒泡
+@submit.prevent="onsubmit"阻止默认事件
+```
 
+```
+// 其它还有按键修饰符
+v-on:keyup.13="submit"
+// 别名 entenr tab delete esc space up down lef right
+@keyup.entenr="submit"
+```
+v-model
+在表单控件元素上创建双向数据绑定
 
+```
+<span>Msg is {{ msg }}</span>
+<input type="text" v-model="msg" placeholder="edit me"></input>
+//span 的显示会响应用户对input的输入
+```
+
+v-ref
+```
+//可以让你直接在js中访问子组件 react中类似
+<div id="parent">
+    <mychildcomponent v-ref:mcc></mcc>
+</div>
+
+<script>
+    var parent = new ({el= "#parent"})
+    var child = parent.$refs.mcc
+    //当和for一起使用时 mcc是个对象或数组
+</script>
+```
+v-el
+类似v-ref这个是为dom创建索引
+v-pre
+跳过当前节点的编译
+cloak
+
+##### 自定义指令
+我们可以使用Vue.directive(id,definition)方法注册一个全局的自定义指令，参数一个是指令id如 el啊if啊show啊
+definition是‘定义对象’用来定义指令的勾子函数
+包括bind update unbind
+```
+// 勾子内this指向 指令对象 指令对象暴露了部分属性
+Vue.directive('my-directive',{
+    deep: true, // 当指令用在一个对象上时 对象内部变化触发update
+    twoWay: true, // 允许指令中使用 this.set(value)，向实例写回数据
+    acceptStatement: true, // 允许指令接受内联语句
+    priority: 100,// 指定优先级 顺次处理但是v-if v-for有最高优先级
+    bind: function() {
+    //做绑定工作监听事件之类的或者是指执行一次的复杂事件
+    },
+    update: function(newvalue,oldvalue) {
+    // <div v-my-directive:hello.a.b="msg"></div>
+    // this.el 指绑定的元素
+    // this.vm 拥有该指令的上下文viewmodel
+    // expression 指令表达式（未被解析的） 不包括 参数和过滤器 msg
+    // arg 指令参数 hello
+    // name 指令名字 不包含前缀 my-directive
+    // modifiers 一个对象包含指令修饰符  a.b
+    // descriptor 一个对象指令的解析结果
+    // nv msg
+    },
+    unbond: function(){
+    //清理工作 比如解绑事件
+    }
+})
+```
+
+### 过滤器
+Filters是过滤器用于在更新视图之前处理原始值的函数。它们通过一个“管道”,在指令或绑定中进行处理：
+```
+<div>{{message | capitalize}}</div>
+```
+这样在 div 的文本内容被更新之前，message 的值会先传给 capitalizie 函数处理。)
+vue已有的⬇
+
++ capitalize // ｛｛ msg | capitalize ｝｝ abc -> Abc
++ uppercae // abc -> ABC
++ lowercase // ABC -> abc
++ currency // {{ num | currency '¥'}} 1234 -> ¥1,234.00默认$
++ pluralize // {{ count | pluralize 'st' 'nd' 'rd'}} 1 -> 1st 2->2nd 3->3rd 4->4rd
++ json // JSON.stringify() 对象转字符串
++ debounce // 包装处理器，让它延迟执行 x ms <input @keyup="onKeyup | debounce 500"> 限定指令值为函数
++ limitBy // 数组限制开始和偏移
++ filterBy // 数组过滤
++ orderBy // 排序
+
+##### 自定义过滤器
+使用Vue.filter(id,fn)注册,参数为过滤器id和过滤器函数
+```
+//
+Vue.filter('reverse', function(value,before,after){
+    return before + value.split('').reverse().join()
+})
+
+Vue.filter('currencyDisplay', {
+  // model -> view
+  // 在更新 `<input>` 元素之前格式化值
+  read: function(val) {
+    return '$'+val.toFixed(2)
+  },
+  // view -> model
+  // 在写回数据之前格式化值
+  write: function(val, oldVal) {
+    var number = +val.replace(/[^\d.]/g, '')
+    return isNaN(number) ? 0 : parseFloat(number.toFixed(2))
+  }
+})
+```
+
+### 组件
+在vue中我们可以把Vue扩展出来的viewmodel子类当作可服用的组件，只需要调用 Vue.extend()创建一个组件构造器
+
+```
+ var MyChild = Vue.extend({
+      //options
+  })
+  var MyParent = Vue.extend({
+    template: '<p>balabala</p>',
+    data: function() {
+        return {a:1}
+    },
+    components: {
+        'my-child-component': MyChild
+    },
+
+  })
+
+  //组件可以 用 Vue.component('my-parent',MyParent)全局注册 也可以用选项components局部注册在组件内
+```
+
+##### 通信&&传递
+
+组件之间的作用域是孤立的
+我们不能在子组件里直接调用父组件的数据，我们可以使用props把数据传递给子组件
+prop是组件options的一个字段期望从父组件传递过来
+```
+var MyChild = Vue.extend({
+    prop: ['msg'],
+    template: '<p>{{ msg }}</p>'
+})
+var MyParent = Vue.extend({
+    components: {
+        "my-child": MyChild
+    },
+    template: "<div><my-child msg="hello"></my-child>111</div>"
+    //动态props
+    //template: "<div><my-child :msg.sync="parent-data"></my-child></div>"
+})
+
+// <div><p>hello</p>111</div>
+// props的传递默认是单向绑定 只有父组件的属性变化时 才会传递给子组件，反过来是不会的。这是为了防止子组件的变化无意改变了父组件的状态，如果 prop 是一个对象或数组，是按引用传递。在子组件内修改它会影响父组件的状态，不管是使用哪种绑定类型。 想起面向对象中类的继承中extend的实现，中间为了防止子类原型的修改影响到基类也做了处理。
+```
+prop的值是可以在组件中认证的
+```
+props: {
+    propa: NUmber,
+    propb: {
+        type: String,
+        default: 'aaa'
+    },
+    .....
+}
+```
+子组件中可以用 `this.$parent`访问父组件，父组件也有一个`this.$children`
+
+尽管我们可以相互访问父子，但是我们还是应该尽可能的避免直接对与其他层级数据的依赖.这会避免父子组件间的耦合，同时如果我们只去看父组件，很难全面了解父组件的状态，因为它可能被子组件影响修改，理想情况，组件状态只有自身可以修改。
+
+vue的实例拥有一些自定义的事件接口，用于在组件树中通信。
+
++ `$on`监听事件
++ `$emit` 触发
++ `$dispatch` 派发事件 事件沿着父链冒泡
++ `$broadcasr` 广播事件 父->子
+
+```
+var MyChild = Vue.extend ({
+    parent: vmParent,
+    methods: {
+        evevtxx: function(){
+            this.$disoatch('child-msg', 'abc')
+        }
+    }
+})
+
+var vmParent = new Vue({
+    ...
+    events: {
+        child-msg: function() {
+            ...
+        }
+    }
+})
+
+// 也可以 ⬇
+<child v-on:child-msg="handleIt"></child>
+```
+##### sloat
+
+### 过渡
+
+vue中的过渡指的是元素在dom中插入或者移除触发的效果
+
+```
+// v-if v-show v-for 动态组件 $appendto()
+<div v-if="show" transition="show"></div>
+// 当插入或删除时 先去找js过渡勾子
+Vue.transition('show',{
+    beforeEnter: function (el) {
+        el.textContent = 'beforeEnter'
+    },
+    enter: function (el) {
+        el.textContent = 'enter'
+    },
+    afterEnter: function (el) {
+        el.textContent = 'afterEnter'
+    },
+    enterCancelled: function (el) {
+        // handle cancellation
+    },
+    beforeLeave: function (el) {
+        el.textContent = 'beforeLeave'
+    },
+    leave: function (el) {
+        el.textContent = 'leave'
+    },
+    afterLeave: function (el) {
+        el.textContent = 'afterLeave'
+    },
+    leaveCancelled: function (el) {
+        // handle cancellation
+    }
+})
+// 然后找css
+.show-transition {
+    这个css会始终保留在元素上
+}
+.show-enter 过度开始时的状态
+.show-leave 过度结束时的状态
+```
+### 其它API
