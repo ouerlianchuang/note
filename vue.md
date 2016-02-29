@@ -411,3 +411,197 @@ Vue.transition('show',{
 
 
 ## Vue-router
+
+#### 基本
+```
+// html
+<div>
+    <a v-link="{ path: '/foo' }"></a>
+    <a v-link="{ path: '/bar' }"></a>
+    <router-view></router-view>
+</div>
+
+// js
+var Foo = Vue.extend({
+    template: 'pppp'
+})
+var  Bar = Vue.extend({
+    template: ''bbbb
+})
+
+var App = Vue.extend({})
+
+var router = new VueRouter()
+
+router.map({
+    'foo': {
+        component: Foo
+    },
+    ...
+})
+
+router.start App, "#app"
+```
+
+#### 路由嵌套
+```
+// 类似子组件
+var Foo = Vue.extend({
+    template: "
+        <div>
+            <p>111</p>
+            <router-view></rv>
+        </div>
+    "
+})
+router.map({
+    '/foo':{
+        component: Foo,
+        subRoutes: {
+            'bar':{
+                component: Bar
+            },
+            'bar2':{
+                component: {
+                    template: "sssssss"
+                }
+            }
+        }
+    }
+})
+```
+
+#### 路由对象和路由匹配
+$route (在使用了vue-touter的应用中，每个组件内都可以通过`this.$route`访问路由对象)
+
+路由对象暴露了一些可用属性
+
+ + \$route.path (当前路由对象的路径
+ + \$route.params (动态匹配的值
+ + \$route.query（查询参数键值对
+ + \$route.router
+ + \$route.matched
+ + \$route.name
+
+自定义字段
+```
+router.map({
+    '/a':{
+        component:{},
+        auth: true
+    }
+})
+
+router.beforeEach(function(transition){
+    if(transition.to.auth){
+        // todo
+    }
+})
+```
+
+动态匹配
+
+|    模式 | 匹配路径   |  $route.params  |
+| --------   | -----:  | :---:  |
+| /user/:username | /user/liang|   {un:'liang'} |
+| /user/:un/post/:post_id  |  /user.liang/post/12   |   {un:'liang',p_i:12}   |
+|/user/*any|/user/a/b/c |{any:'a/b/c'}
+|/user/*any/bar|/user/a/b/bar |{any:'a/b'}
+
+#### 具名路径
+
+```
+router.map({
+    '/user/:username':{
+        name: 'user',
+        component:{...}
+    }
+})
+
+v-link="'user/' + user.name"
+
+<a v-link="{name: 'user', params: { username:123 }}">
+
+this.$route.router.go('/as')
+
+this.$route.router.go({name: 'user', params: { username:123 })
+
+<a v-link="{ path: '/abc', replace: true }"></a>
+// 带有 replace： true，链接点击会触发 router.replace() 而不是 router.go()不会留下浏览历史纪录
+
+<a v-link="{ path: 'relative/path', append: true }"></a>
+// 带有 append: true 选项的相对路径链接会确保该相对路径始终添加到当前路径之后。举例来说，从 /a 跳转到相对路径 b 时，如果没有 append: true 我们会跳转到 /b，但有 append: true 则会跳转到 /a/b
+```
+
+#### 路由配置项
+
++ hashbang
+    - 默认true，此时路由路径开头为 #!
++ history
+    + 默认false，启用html5 history模式，可以使用history.pushState()history.replaceState()管理浏览历史纪录
++ abstract
+    + 默认false，
++ root
+    + 默认null
++ linkActiveClass
+    + 默认 ‘v-link-active’
++ saveScrollPosition
++ transitionOnLoad
++ suppressTransitionError
+
+
+#### 路由钩子
+接受promise对象，若果有transition参数，transition.next（）之类会执行resolve
++ data
+    +  会在activate被断定以及页面切换前调用，加载和设置当前组件数据（不管组件是否新创建，切换路由就调用该钩子）
++ activate
+    + 组件创建并切换进入时
++ deactivate
+    + 激活阶段，一个组件仅用或移除时
++ canActivate
+    + 验证阶段，当一个组件将要被切入时
++ canDeactivate
+    + 验证阶段，当一个组件将要被切出时
++ canReuse
+    + 是否可重用
+
+－－－
+每个否自函数都接受一个transition对象最为参数，这个对象有以下函数和方法⬇️
+
++ transition.to
+
+    + 一个代表将要切换到的路径的路由对象。
+
++ transition.from
+
+    + 一个代表当前路径的路由对象。
+
++ transition.next()
+
+    + 调用此函数处理切换过程的下一步。
+
++ transition.abort([reason])
+
+    + 调用此函数来终止或者拒绝此次切换。
+
++ transition.redirect(path)
+
+    + 取消当前切换并重定向到另一个路由。
+
+
+
+#### API
+
++ 路由实例属性
+    + router.app (路由的vue根实例
+    + router.mode
+    + router.star(app,el) 启动路由，创建一个app的实例并挂载到el
+    + router.stop 停止监听popstate和hashchange事件，但是router.app并没有被销毁，router.go()
+    + router.map 定义路由的映射 包括component，subRoutes
+    + router.on 添加一条顶级路由配置
+    + router.go
+    + router.replace
+    + router.redirect 重定向
+    + router.allas 路由全局的别名配置
+    + router.beforeEach 全局勾子 路由切换前调用
+    + router.afterEach
